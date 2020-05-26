@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  app:
+    init: true
+    build: .
+    command: sleep infinity
+    volumes:
+      - ..:/original:cached
+      - app:/app
+      - ../.devcontainer:/app/.devcontainer:cached
+      - home:/home/app
+      - ~/.gitconfig:/home/app/.gitconfig:ro
+      - ~/.zshrc:/home/app/.zshrc:ro
+      - ~/.netrc:/home/app/.netrc:ro
+volumes:
+  app:
+  home:
