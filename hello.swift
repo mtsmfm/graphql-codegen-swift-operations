@@ -38,26 +38,38 @@ extension Query {
   }
 }
 
-let session = URLSession.shared
-let url = URL(string: "https://swapi.graph.cool/graphql")!
-var request = URLRequest(url: url)
-request.httpMethod = "POST"
-request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-let json = [
-  "query": "{ allFilms { title } }"
-]
-let jsonData = try! JSONSerialization.data(withJSONObject: json, options: [])
-let sem = DispatchSemaphore.init(value: 0)
+class HttpJsonApiClient {
+  func post(url urlString: String, json: [String: String]) -> Any {
+    let url = URL(string: urlString)!
+    let session = URLSession.shared
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    let jsonData = try! JSONSerialization.data(withJSONObject: json, options: [])
+    let sem = DispatchSemaphore.init(value: 0)
+    var result: Any? = nil
+    let task = session.uploadTask(with: request, from: jsonData) { data, response, error in
+      defer { sem.signal() }
 
-let task = session.uploadTask(with: request, from: jsonData) { data, response, error in
-  defer { sem.signal() }
-
-  if let data = data, let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-    if let data = json["data"] as? [String: Any], let result = Query(json: data) {
-      print(result)
+      if let data = data, let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+        result = json
+      }
     }
+
+    task.resume()
+    sem.wait()
+
+    return result!
   }
 }
 
-task.resume()
-sem.wait()
+let client = HttpJsonApiClient()
+if (
+  let data = client.post(
+    url: "https://swapi.graph.cool/graphql",
+    json: [
+      "query": "{ allFilms { title } }"
+    ]
+  )["data"] as? [String: Any]
+let result = Query(json: data)
+print(result)
