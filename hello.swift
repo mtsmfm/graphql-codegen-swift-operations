@@ -64,12 +64,13 @@ class HttpJsonApiClient {
 }
 
 let client = HttpJsonApiClient()
-if (
-  let data = client.post(
+if let result = client.post(
     url: "https://swapi.graph.cool/graphql",
     json: [
       "query": "{ allFilms { title } }"
     ]
-  )["data"] as? [String: Any]
-let result = Query(json: data)
-print(result)
+  ) as? [String: Any],
+  let data = result["data"] as? [String: Any] {
+  let result = Query(json: data)!
+  print(result)
+}
