@@ -10,7 +10,7 @@ RUN apt-get update \
 RUN useradd --create-home --user-group --uid 1000 app
 RUN mkdir -p /app /original $BUNDLE_PATH
 RUN chown -R app /app /original $BUNDLE_PATH
-RUN npm install -g apollo
+RUN npm install -g yarn
 
 WORKDIR /app
 
