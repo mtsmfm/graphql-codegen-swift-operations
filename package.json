@@ -4,5 +4,8 @@
     "@graphql-codegen/visitor-plugin-common": "^1.15.0",
     "graphql": "^15.0.0",
     "typescript": "^3.9.3"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^1.15.0"
   }
 }
