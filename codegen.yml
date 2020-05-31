@@ -1,0 +1,4 @@
+schema: https://swapi.graph.cool/graphql
+generates:
+  Sources/app/generated.swift:
+    - swift-plugin.js
