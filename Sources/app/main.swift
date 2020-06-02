@@ -1,40 +1,77 @@
 import Foundation
 import FoundationNetworking
 
-struct Film {
-  let title: String
+protocol FooComponent_Film {
+  var title: String { get }
 }
 
-struct Query {
-  let allFilms: Array<Film>
+protocol BarComponent_Film {
+  var director: String { get }
 }
 
-extension Film {
-  init?(json: [String: Any]) {
-    guard let title = json["title"] as? String else {
-      return nil
-    }
+class AppQuery {
+  let data: Data?;
+  let errors: Errors?;
 
-    self.title = title
+  public static let operationDefinition: String =
+    """
+      query AppQuery {
+        allFilms {
+          ...FooComponent_Film
+          ...BarComponent_Film
+        }
+      }
+
+      fragment FooComponent_Film on Film {
+        title
+      }
+
+      fragment BarComponent_Film on Film {
+        director
+      }
+    """
+
+  init(json: [String: Any]) {
+    self.data = Data(json: json["data"] as Any)
+    self.errors = Errors(json: json["errors"] as Any)
   }
-}
 
-extension Query {
-  init?(json: [String: Any]) {
-    var allFilms: Array<Film> = []
-    guard let allFilmsJSON = json["allFilms"] as? [[String: Any]] else {
-      return nil
-    }
+  struct Data {
+    let allFilms: [Internal_AllFilmsElement]
 
-    for filmJSON in allFilmsJSON {
-      guard let film = Film(json: filmJSON) else {
+    init?(json: Any) {
+      guard let data = json as? [String: Any] else {
         return nil
       }
 
-      allFilms.append(film)
+      self.allFilms = (data["allFilms"] as! [[String: Any]]).map { Internal_AllFilmsElement(json: $0)! }
     }
+  }
 
-    self.allFilms = allFilms
+  struct Internal_AllFilmsElement: FooComponent_Film, BarComponent_Film {
+    let title: String
+    let director: String
+
+    init?(json: Any) {
+      guard let json = json as? [String: Any] else {
+        return nil
+      }
+
+      self.title = json["title"] as! String
+      self.director = json["director"] as! String
+    }
+  }
+
+  struct Errors {
+    let json: Any
+
+    init?(json: Any) {
+      guard let errors = json as? [String: Any] else {
+        return nil
+      }
+
+      self.json = errors
+    }
   }
 }
 
@@ -63,14 +100,28 @@ class HttpJsonApiClient {
   }
 }
 
+func renderFoo(film: FooComponent_Film) {
+  print(film)
+}
+
+func renderBar(film: BarComponent_Film) {
+  print(film)
+}
+
 let client = HttpJsonApiClient()
 if let result = client.post(
     url: "https://swapi.graph.cool/graphql",
     json: [
-      "query": "{ allFilms { title } }"
+      "query": AppQuery.operationDefinition
     ]
-  ) as? [String: Any],
-  let data = result["data"] as? [String: Any] {
-  let result = Query(json: data)!
-  print(result)
+  ) as? [String: Any] {
+  let result = AppQuery(json: result)
+  print(result.data as Any)
+  print(result.errors as Any)
+  if let data = result.data {
+    for film in data.allFilms {
+      renderFoo(film: film)
+      renderBar(film: film)
+    }
+  }
 }
