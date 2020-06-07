@@ -4,7 +4,6 @@ import {
   InlineFragmentNode, isNonNullType, GraphQLOutputType
 } from 'graphql';
 import { PluginFunction } from '@graphql-codegen/plugin-helpers';
-import { indentMultiline } from '@graphql-codegen/visitor-plugin-common';
 
 type Selection = FragmentSpreadNode | InlineFragmentNode | Property
 
@@ -43,6 +42,10 @@ const capitalize = (str: string) => {
 
 const toSwiftStructName = ({ id, name }: Pick<SelectionSetData, 'id' | 'name'>) => {
   return `Internal_${id}_${capitalize(name)}`;
+}
+
+const indentMultiline = (lines: string, indent: number) => {
+  return lines.split("\n").map(l => l.length === 0 ? "" : Array.from({ length: indent }).map(() => "  ").join("") + l).join("\n");
 }
 
 const toSwiftProperties = (selections: Selection[], fragments: FragmentData[], scalarMap: ScalarMap, selectionSets: SelectionSetData[]) => {

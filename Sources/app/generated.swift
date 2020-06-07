@@ -9,11 +9,11 @@ class AppQuery {
         ...BarComponent_Film
       }
     }
-    
+
     fragment FooComponent_Film on Film {
       title
     }
-    
+
     fragment BarComponent_Film on Film {
       director
     }
