@@ -1,8 +1,2 @@
-.DS_Store
-/.build
-/Packages
-/*.xcodeproj
-xcuserdata/
-
 /node_modules
-/swift-plugin.js
+/dist

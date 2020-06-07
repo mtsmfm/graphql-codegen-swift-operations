@@ -3,4 +3,4 @@ schema: ./schema.graphql
 documents: 'query.graphql'
 generates:
   Sources/app/generated.swift:
-    - swift-plugin.js
+    - '@mtsmfm/graphql-codegen-swift-operations'

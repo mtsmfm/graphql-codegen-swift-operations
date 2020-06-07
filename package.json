@@ -1,8 +1,13 @@
 {
+  "name": "@mtsmfm/graphql-codegen-swift-operations",
+  "version": "0.1.0",
+  "main": "dist/index.js",
   "dependencies": {
     "@graphql-codegen/plugin-helpers": "^1.15.0",
-    "graphql": "^15.0.0",
     "typescript": "^3.9.3"
+  },
+  "peerDependencies": {
+    "graphql": "^15.0.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.15.0"

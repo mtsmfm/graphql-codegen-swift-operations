@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@mtsmfm/graphql-codegen-swift-operations": "file:../",
+    "graphql": "^15.0.0"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^1.15.0"
+  }
+}
