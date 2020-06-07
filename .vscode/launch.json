@@ -11,7 +11,8 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/node_modules/.bin/graphql-codegen",
+      "cwd": "${workspaceFolder}/swift-test-project",
+      "program": "${workspaceFolder}/swift-test-project/node_modules/.bin/graphql-codegen",
     }
   ]
 }
