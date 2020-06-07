@@ -1,6 +1,12 @@
 {
   "name": "@mtsmfm/graphql-codegen-swift-operations",
-  "version": "0.1.0",
+  "description": "graphql-codegen Swift plugin for GraphQL operations",
+  "keywords": [
+    "graphql",
+    "swift",
+    "graphql-codegen"
+  ],
+  "version": "0.1.1",
   "license": "MIT",
   "repository": "git@github.com:mtsmfm/graphql-codegen-swift-operations.git",
   "main": "dist/index.js",
