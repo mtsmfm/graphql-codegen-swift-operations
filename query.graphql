@@ -1,5 +1,14 @@
 query AppQuery {
   allFilms {
-    title
+    ...FooComponent_Film
+    ...BarComponent_Film
   }
+}
+
+fragment FooComponent_Film on Film {
+  title
+}
+
+fragment BarComponent_Film on Film {
+  director
 }
