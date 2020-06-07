@@ -14,5 +14,11 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^1.15.0",
     "graphql": "^15.0.0"
+  },
+  "scripts": {
+    "prepublishOnly": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
