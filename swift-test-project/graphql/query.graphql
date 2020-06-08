@@ -1,0 +1,14 @@
+query AppQuery {
+  organizations {
+    ...FooComponent_Org
+    ...BarComponent_Org
+  }
+}
+
+fragment FooComponent_Org on Organization {
+  id
+}
+
+fragment BarComponent_Org on Organization {
+  name
+}

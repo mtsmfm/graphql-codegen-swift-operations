@@ -26,17 +26,17 @@ class HttpJsonApiClient {
   }
 }
 
-func renderFoo(film: FooComponent_Film) {
-  print(film)
+func renderFoo(org: FooComponent_Org) {
+  print(org)
 }
 
-func renderBar(film: BarComponent_Film) {
-  print(film)
+func renderBar(org: BarComponent_Org) {
+  print(org)
 }
 
 let client = HttpJsonApiClient()
 if let result = client.post(
-    url: "https://swapi.graph.cool/graphql",
+    url: "http://localhost:4000/graphql",
     json: [
       "query": AppQuery.operationDefinition
     ]
@@ -45,9 +45,9 @@ if let result = client.post(
   print(result.data as Any)
   print(result.errors as Any)
   if let data = result.data {
-    for film in data.allFilms {
-      renderFoo(film: film)
-      renderBar(film: film)
+    for org in data.organizations {
+      renderFoo(org: org)
+      renderBar(org: org)
     }
   }
 }

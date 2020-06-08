@@ -7,6 +7,8 @@
 ```
 $ git clone https://github.com/mtsmfm/graphql-codegen-swift-operations
 $ cd graphql-codegen-swift-operations/swift-test-project
+$ yarn install
+$ node server.mjs
 $ swift run
 ```
 

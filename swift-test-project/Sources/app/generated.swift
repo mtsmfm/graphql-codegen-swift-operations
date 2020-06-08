@@ -4,18 +4,18 @@ class AppQuery {
   public static let operationDefinition: String =
     """
     query AppQuery {
-      allFilms {
-        ...FooComponent_Film
-        ...BarComponent_Film
+      organizations {
+        ...FooComponent_Org
+        ...BarComponent_Org
       }
     }
 
-    fragment FooComponent_Film on Film {
-      title
+    fragment FooComponent_Org on Organization {
+      id
     }
 
-    fragment BarComponent_Film on Film {
-      director
+    fragment BarComponent_Org on Organization {
+      name
     }
     """
 
@@ -25,14 +25,14 @@ class AppQuery {
   }
 
   struct Data {
-    let allFilms: [Internal_1_Allfilms]
+    let organizations: [Internal_1_Organizations]
 
     init?(json: Any) {
       guard let data = json as? [String: Any] else {
         return nil
       }
 
-      self.allFilms = (data["allFilms"] as! [[String: Any]]).map { Internal_1_Allfilms(json: $0)! }
+      self.organizations = (data["organizations"] as! [[String: Any]]).map { Internal_1_Organizations(json: $0)! }
     }
   }
 
@@ -49,24 +49,24 @@ class AppQuery {
   }
 }
 
-protocol FooComponent_Film {
-  var title: String { get }
+protocol FooComponent_Org {
+  var id: String { get }
 }
 
-protocol BarComponent_Film {
-  var director: String? { get }
+protocol BarComponent_Org {
+  var name: String { get }
 }
 
-struct Internal_1_Allfilms: FooComponent_Film, BarComponent_Film {
-  let title: String
-  let director: String?
+struct Internal_1_Organizations: FooComponent_Org, BarComponent_Org {
+  let id: String
+  let name: String
 
   init?(json: Any) {
     guard let data = json as? [String: Any] else {
       return nil
     }
 
-    self.title = data["title"] as! String
-    self.director = data["director"] as? String
+    self.id = data["id"] as! String
+    self.name = data["name"] as! String
   }
 }
