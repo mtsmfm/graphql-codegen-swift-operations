@@ -6,7 +6,7 @@
     "swift",
     "graphql-codegen"
   ],
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "MIT",
   "repository": "git@github.com:mtsmfm/graphql-codegen-swift-operations.git",
   "main": "dist/index.js",

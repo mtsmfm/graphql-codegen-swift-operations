@@ -61,5 +61,4 @@ $ graphql-codegen
 - InlineFragment
 - Nullable array
 - Union
-- Add some other stuff to scalar map
 - Customizable scalar map

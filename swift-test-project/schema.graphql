@@ -12,4 +12,7 @@ type Query {
 type Organization {
   id: ID!
   name: String!
+  int: Int!
+  float: Float!
+  boolean: Boolean!
 }

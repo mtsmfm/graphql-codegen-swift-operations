@@ -94,6 +94,9 @@ export const plugin: PluginFunction = async (
   const scalarMap: ScalarMap = {
     ID: "String",
     String: "String",
+    Int: "Int32",
+    Float: "Float",
+    Boolean: "Bool"
   }
 
   const selectionSets: SelectionSetData[] = [];

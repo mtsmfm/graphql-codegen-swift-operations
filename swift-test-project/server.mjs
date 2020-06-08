@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const schema = buildSchema(readFileSync(join(__dirname, 'schema.graphql')).toString());
 
-const org = { id: 'a', name: 'org' };
+const org = { id: 'a', name: 'org', int: 1, float: 1.1, boolean: true };
 
 const rootValue = {
   organizations: () => [org],

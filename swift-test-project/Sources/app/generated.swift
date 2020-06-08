@@ -5,6 +5,9 @@ class AppQuery {
     """
     query AppQuery {
       organizations {
+        int
+        float
+        boolean
         ...FooComponent_Org
         ...BarComponent_Org
       }
@@ -58,6 +61,9 @@ protocol BarComponent_Org {
 }
 
 struct Internal_1_Organizations: FooComponent_Org, BarComponent_Org {
+  let int: Int32
+  let float: Float
+  let boolean: Bool
   let id: String
   let name: String
 
@@ -66,6 +72,9 @@ struct Internal_1_Organizations: FooComponent_Org, BarComponent_Org {
       return nil
     }
 
+    self.int = data["int"] as! Int32
+    self.float = data["float"] as! Float
+    self.boolean = data["boolean"] as! Bool
     self.id = data["id"] as! String
     self.name = data["name"] as! String
   }
