@@ -14,9 +14,9 @@ Generated file:
 
 https://github.com/mtsmfm/graphql-codegen-swift-operations/blob/master/swift-test-project/Sources/app/generated.swift
 
-Operation:
+Operations:
 
-https://github.com/mtsmfm/graphql-codegen-swift-operations/blob/master/swift-test-project/query.graphql
+https://github.com/mtsmfm/graphql-codegen-swift-operations/tree/master/swift-test-project/graphql
 
 Usage:
 
