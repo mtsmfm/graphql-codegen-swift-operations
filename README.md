@@ -2,6 +2,8 @@
 
 [graphql-codegen](https://graphql-code-generator.com/) Swift plugin for GraphQL operations.
 
+[![npm version](https://badge.fury.io/js/%40mtsmfm%2Fgraphql-codegen-swift-operations.svg)](https://badge.fury.io/js/%40mtsmfm%2Fgraphql-codegen-swift-operations)
+
 ## Demo
 
 You can find example project on /swift-test-project dir:
