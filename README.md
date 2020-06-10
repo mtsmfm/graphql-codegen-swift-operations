@@ -61,6 +61,5 @@ $ graphql-codegen
 ## TODOs
 
 - InlineFragment
-- Nullable array
 - Union
 - Customizable scalar map

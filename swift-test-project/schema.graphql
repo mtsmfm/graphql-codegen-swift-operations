@@ -1,5 +1,6 @@
 type Query {
   organizations: [Organization!]!
+  nestedOrganizations: [[[Organization!]]]!
   outerAndInnerNullableOrganizations: [Organization]
   outerAndInnerNullableOrganizations2: [Organization]
   outerNullableOrganizations: [Organization!]

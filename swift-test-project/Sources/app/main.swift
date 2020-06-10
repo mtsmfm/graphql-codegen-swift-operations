@@ -49,5 +49,8 @@ if let result = client.post(
       renderFoo(org: org)
       renderBar(org: org)
     }
+    for org in data.nestedOrganizations {
+      print(org as Any)
+    }
   }
 }

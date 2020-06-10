@@ -4,6 +4,20 @@ query AppQuery {
     ...FooComponent_Org
     ...BarComponent_Org
   }
+
+  nestedOrganizations { ...AllOrgFields }
+  outerAndInnerNullableOrganizations  { ...AllOrgFields }
+  outerAndInnerNullableOrganizations2 { ...AllOrgFields }
+  outerNullableOrganizations          { ...AllOrgFields }
+  outerNullableOrganizations2         { ...AllOrgFields }
+  innerNullableOrganizations          { ...AllOrgFields }
+
+  nullableOrganization(id: "a") { ...AllOrgFields }
+  organization(id: "a")         { ...AllOrgFields }
+}
+
+fragment AllOrgFields on Organization {
+  id, name, int, float, boolean
 }
 
 fragment FooComponent_Org on Organization {

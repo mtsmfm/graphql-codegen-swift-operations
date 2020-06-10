@@ -14,6 +14,7 @@ const org = { id: 'a', name: 'org', int: 1, float: 1.1, boolean: true };
 
 const rootValue = {
   organizations: () => [org],
+  nestedOrganizations: () => [[[org]]],
   outerAndInnerNullableOrganizations: () => null,
   outerAndInnerNullableOrganizations2: () => [null, org],
   outerNullableOrganizations: () => null,

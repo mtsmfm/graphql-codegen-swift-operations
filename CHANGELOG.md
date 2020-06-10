@@ -1,5 +1,9 @@
 # Change log
 
+## 0.3.0
+
+- Support nullable and/or nested Array
+
 ## 0.2.0
 
 - Support Int, Float, Boolean

@@ -48,6 +48,31 @@ const indentMultiline = (lines: string, indent: number) => {
   return lines.split("\n").map(l => l.length === 0 ? "" : Array.from({ length: indent }).map(() => "  ").join("") + l).join("\n");
 }
 
+const getWrappingType = (type: GraphQLOutputType) => {
+  const typeStack = [];
+  let t = type;
+
+  while (true) {
+    if (isNonNullType(t)) {
+      if (isListType(t.ofType)) {
+        t = t.ofType.ofType;
+        typeStack.push({ nonNull: true, list: true });
+      } else {
+        typeStack.push({ nonNull: true, list: false });
+        break;
+      }
+    } else if (isListType(t)) {
+      t = t.ofType;
+      typeStack.push({ nonNull: false, list: true });
+    } else {
+      typeStack.push({ nonNull: false, list: false });
+      break;
+    }
+  }
+
+  return typeStack;
+}
+
 const toSwiftProperties = (selections: Selection[], fragments: FragmentData[], scalarMap: ScalarMap, selectionSets: SelectionSetData[]) => {
   return selections.reduce((ary, selection) => {
     switch (selection.kind) {
@@ -60,28 +85,122 @@ const toSwiftProperties = (selections: Selection[], fragments: FragmentData[], s
         return [...ary, selection]
     }
   }, [] as Property[]).map(({ type, name, selectionSetId }) => {
-    const ofType = (isListType(type) || isNonNullType(type)) && type.ofType;
-    const isList = isListType(type) || isListType(ofType);
-    const isNonNull = isNonNullType(type) || isNonNullType(ofType);
     const typeName = getNamedType(type).name;
-
     let swiftType: string;
+    let swiftElementType: string;
     let swiftPrimitive = false;
 
     if (selectionSetId) {
       const selectionSet = selectionSets.find(s => s.id === selectionSetId)!
-      swiftType = toSwiftStructName(selectionSet);
+
+      swiftElementType = toSwiftStructName(selectionSet);
     } else {
       if (!scalarMap[typeName]) {
         throw `Swift type for ${typeName} is not defined`;
       }
 
-      swiftType = scalarMap[typeName]!;
+      swiftElementType = scalarMap[typeName]!;
       swiftPrimitive = true;
     }
 
-    return { name, swiftType, swiftPrimitive, isList, isNonNull }
+    swiftType = getWrappingType(type).reduceRight((str, { list, nonNull }) => {
+      str = list ? `[${str}]` : str;
+      str = nonNull ? str : `${str}?`;
+      return str;
+    }, swiftElementType);
+
+    return { name, swiftType, swiftElementType, swiftPrimitive, type }
   });
+}
+
+const printStruct = (structName: string, protocols: string[], properties: ReturnType<typeof toSwiftProperties>) => {
+  return `
+struct ${structName}${protocols.length > 1 ? ": " + protocols.join(", ") : ""} {
+${indentMultiline(properties.map(({ name, swiftType }) => `let ${name}: ${swiftType}`).join("\n"), 1)}
+
+  init?(json: Any?) {
+    guard let json = json as? [String: Any] else {
+      return nil
+    }
+
+${indentMultiline(properties.map(({ name, swiftPrimitive, swiftElementType, type }) => {
+    const wrappingTypes = getWrappingType(type);
+    const mostInnerWrappingType = wrappingTypes[wrappingTypes.length - 1];
+    const mostOuterWrappingType = wrappingTypes[0];
+
+    if (!mostOuterWrappingType.list) {
+      if (swiftPrimitive) {
+        if (mostOuterWrappingType.nonNull) {
+          return `
+            self.${name} = json["${name}"] as! ${swiftElementType}
+          `.trim();
+        }
+        else {
+          return `
+            self.${name} = json["${name}"] as? ${swiftElementType}
+          `.trim();
+        }
+      }
+      else {
+        if (mostOuterWrappingType.nonNull) {
+          return `
+            self.${name} = ${swiftElementType}(json: json["${name}"])!
+          `.trim();
+        }
+        else {
+          return `
+            self.${name} = ${swiftElementType}(json: json["${name}"])
+          `.trim();
+        }
+      }
+    }
+
+    let str = '';
+
+    if (swiftPrimitive) {
+      if (mostInnerWrappingType.nonNull) {
+        str = `json as! ${swiftElementType}`;
+      } else {
+        str = `json as? ${swiftElementType}`;
+      }
+    } else {
+      if (mostInnerWrappingType.nonNull) {
+        str = `${swiftElementType}(json: json)!`;
+      } else {
+        str = `${swiftElementType}(json: json)`;
+      }
+    }
+
+    str = wrappingTypes.slice(1).reduceRight((str, { list, nonNull }) => {
+      if (list) {
+        return `
+(json as${nonNull ? '!' : '?'} [Any])${nonNull ? '' : '?'}.map { json in
+${indentMultiline(str, 1)}
+}
+          `.trim();
+      } else {
+        return str;
+      }
+    }, str);
+
+    if (mostOuterWrappingType.nonNull) {
+      return `
+self.${name} = (json["${name}"] as! [Any]).map { json in
+${indentMultiline(str, 1)}
+}
+      `.trim();
+    }
+    else {
+      return `
+self.${name} = (json["${name}"] as? [Any])?.map { json in
+${indentMultiline(str, 1)}
+}
+      `.trim();
+    }
+  }).join("\n"), 2)}
+  }
+}
+  `.trim();
 }
 
 export const plugin: PluginFunction = async (
@@ -186,25 +305,7 @@ ${indentMultiline(op.definition, 2)}
     self.errors = Errors(json: json["errors"] as Any)
   }
 
-  struct Data {
-${indentMultiline(properties.map(({ name, swiftType, isList, isNonNull }) => `let ${name}: ${isList ? `[${swiftType}]` : swiftType}${isNonNull ? '' : '?'}`).join("\n"), 2)}
-
-    init?(json: Any) {
-      guard let data = json as? [String: Any] else {
-        return nil
-      }
-
-${indentMultiline(properties.map(({ name, swiftType, swiftPrimitive, isList, isNonNull }) => {
-      if (isList) {
-        return `self.${name} = (data["${name}"] as! [[String: Any]]).map { ${swiftType}(json: $0)${isNonNull ? '!' : ''} }`;
-      } else if (swiftPrimitive) {
-        return `self.${name} = data["${name}"] as${isNonNull ? '!' : '?'} ${swiftType}`;
-      } else {
-        return `self.${name} = ${swiftType}(json: data["${name}"])${isNonNull ? '!' : ''}`;
-      }
-    }).join("\n"), 3)}
-    }
-  }
+${indentMultiline(printStruct('Data', [], properties), 1)}
 
   struct Errors {
     let json: Any
@@ -228,7 +329,7 @@ ${indentMultiline(properties.map(({ name, swiftType, swiftPrimitive, isList, isN
 
     return `
 protocol ${name} {
-${indentMultiline(properties.map(({ name, swiftType, isList, isNonNull }) => `var ${name}: ${isList ? `[${swiftType}]` : swiftType}${isNonNull ? '' : '?'} { get }`).join("\n"), 1)}
+${indentMultiline(properties.map(({ name, swiftType }) => `var ${name}: ${swiftType} { get }`).join("\n"), 1)}
 }
     `.trim();
   }).join("\n\n");
@@ -236,33 +337,13 @@ ${indentMultiline(properties.map(({ name, swiftType, isList, isNonNull }) => `va
   result += "\n\n";
 
   result += selectionSets.map(selectionSet => {
-    const { selections, id } = selectionSet;
+    const { selections } = selectionSet;
     const properties = toSwiftProperties(selections, fragments, scalarMap, selectionSets);
     const structName = toSwiftStructName(selectionSet);
     const fragmentNames = (selections.filter(s => s.kind === 'FragmentSpread') as FragmentSpreadNode[]).map(s => s.name.value);
 
-    return `
-struct ${structName}${fragmentNames.length > 0 ? `: ${fragmentNames.join(", ")}` : ''} {
-${indentMultiline(properties.map(({ name, swiftType, isList, isNonNull }) => `let ${name}: ${isList ? `[${swiftType}]` : swiftType}${isNonNull ? '' : '?'}`).join("\n"), 1)}
-
-  init?(json: Any) {
-    guard let data = json as? [String: Any] else {
-      return nil
-    }
-
-${indentMultiline(properties.map(({ name, swiftType, swiftPrimitive, isList, isNonNull }) => {
-      if (isList) {
-        return `self.${name} = (data["${name}"] as! [[String: Any]]).map { ${swiftType}(json: $0)${isNonNull ? '!' : ''} }`;
-      } else if (swiftPrimitive) {
-        return `self.${name} = data["${name}"] as${isNonNull ? '!' : '?'} ${swiftType}`;
-      } else {
-        return `self.${name} = ${swiftType}(json: data["${name}"])`;
-      }
-    }).join("\n"), 2)}
-  }
-}
-    `.trim();
-  }).join("\n\n")
+    return printStruct(structName, fragmentNames, properties);
+  }).join("\n\n");
 
   result += "\n";
 
