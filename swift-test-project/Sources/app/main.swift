@@ -4,7 +4,7 @@ import FoundationNetworking
 #endif
 
 class HttpJsonApiClient {
-  func post(url urlString: String, json: [String: String]) -> Any {
+  func post(url urlString: String, json: [String: String]) -> Result<[String: Any]?, Error> {
     let url = URL(string: urlString)!
     let session = URLSession.shared
     var request = URLRequest(url: url)
@@ -12,19 +12,22 @@ class HttpJsonApiClient {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     let jsonData = try! JSONSerialization.data(withJSONObject: json, options: [])
     let sem = DispatchSemaphore.init(value: 0)
-    var result: Any? = nil
+    var result: Result<[String: Any]?, Error>!
     let task = session.uploadTask(with: request, from: jsonData) { data, response, error in
       defer { sem.signal() }
 
-      if let data = data, let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-        result = json
+      result = Result {
+        if let error = error {
+            throw error
+        }
+        return try data.flatMap{ try JSONSerialization.jsonObject(with: $0) as? [String: Any] }
       }
     }
 
     task.resume()
     sem.wait()
 
-    return result!
+    return result
   }
 }
 
@@ -37,12 +40,12 @@ func renderBar(org: BarComponent_Org) {
 }
 
 let client = HttpJsonApiClient()
-if let result = client.post(
+if case .success(let result?) = client.post(
     url: "http://localhost:4000/graphql",
     json: [
       "query": AppQuery.operationDefinition
     ]
-  ) as? [String: Any] {
+  ) {
   let result = AppQuery(json: result)
   print(result.data as Any)
   print(result.errors as Any)
