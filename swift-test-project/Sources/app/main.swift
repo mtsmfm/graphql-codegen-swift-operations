@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
 import FoundationNetworking
+#endif
 
 class HttpJsonApiClient {
   func post(url urlString: String, json: [String: String]) -> Any {
