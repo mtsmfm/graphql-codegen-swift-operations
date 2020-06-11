@@ -40,13 +40,10 @@ func renderBar(org: BarComponent_Org) {
 }
 
 let client = HttpJsonApiClient()
-if case .success(let result?) = client.post(
-    url: "http://localhost:4000/graphql",
-    json: [
-      "query": AppQuery.operationDefinition
-    ]
-  ) {
-  let result = AppQuery(json: result)
+let result = client.post(url: "http://localhost:4000/graphql", json: ["query": AppQuery.operationDefinition])
+switch result {
+case .success(let json?):
+  let result = AppQuery(json: json)
   print(result.data as Any)
   print(result.errors as Any)
   if let data = result.data {
@@ -58,4 +55,12 @@ if case .success(let result?) = client.post(
       print(org as Any)
     }
   }
+case .failure(let error):
+  print("""
+        [Error] \(error.localizedDescription)
+        To run the server, see README:
+        https://github.com/mtsmfm/graphql-codegen-swift-operations/tree/master/swift-test-project
+        """)
+default:
+  print("Unexpected response. The response was not JSON object.")
 }
