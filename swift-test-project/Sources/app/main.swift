@@ -3,7 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 
-class HttpJsonApiClient {
+class SynchronousHTTPClient {
   func post(url urlString: String, json: [String: String]) throws -> Data {
     let url = URL(string: urlString)!
     let session = URLSession.shared
@@ -39,7 +39,7 @@ func renderBar(org: BarComponent_Org) {
   print(org)
 }
 
-let client = HttpJsonApiClient()
+let client = SynchronousHTTPClient()
 do {
   let decoder = JSONDecoder()
   let data = try client.post(url: "http://localhost:4000/graphql", json: ["query": AppQuery.operationDefinition])
