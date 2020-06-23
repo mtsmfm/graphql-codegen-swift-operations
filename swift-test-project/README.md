@@ -18,8 +18,8 @@ $ swift run
 $ git clone https://github.com/mtsmfm/graphql-codegen-swift-operations
 $ cd graphql-codegen-swift-operations
 $ yarn install
+$ yarn tsc
 $ cd swift-test-project
 $ yarn install
-$ yarn tsc
 $ yarn graphql-codegen
 ```
