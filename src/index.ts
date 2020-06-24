@@ -115,92 +115,19 @@ const toSwiftProperties = (selections: Selection[], fragments: FragmentData[], s
 
 const printStruct = (structName: string, protocols: string[], properties: ReturnType<typeof toSwiftProperties>) => {
   return `
-struct ${structName}${protocols.length > 1 ? ": " + protocols.join(", ") : ""} {
+struct ${structName}: ${["Decodable", ...protocols].join(", ")} {
 ${indentMultiline(properties.map(({ name, swiftType }) => `let ${name}: ${swiftType}`).join("\n"), 1)}
 
-  init?(json: Any?) {
-    guard let json = json as? [String: Any] else {
-      return nil
-    }
-
-${indentMultiline(properties.map(({ name, swiftPrimitive, swiftElementType, type }) => {
-    const wrappingTypes = getWrappingType(type);
-    const mostInnerWrappingType = wrappingTypes[wrappingTypes.length - 1];
-    const mostOuterWrappingType = wrappingTypes[0];
-
-    if (!mostOuterWrappingType.list) {
-      if (swiftPrimitive) {
-        if (mostOuterWrappingType.nonNull) {
-          return `
-            self.${name} = json["${name}"] as! ${swiftElementType}
-          `.trim();
-        }
-        else {
-          return `
-            self.${name} = json["${name}"] as? ${swiftElementType}
-          `.trim();
-        }
-      }
-      else {
-        if (mostOuterWrappingType.nonNull) {
-          return `
-            self.${name} = ${swiftElementType}(json: json["${name}"])!
-          `.trim();
-        }
-        else {
-          return `
-            self.${name} = ${swiftElementType}(json: json["${name}"])
-          `.trim();
-        }
-      }
-    }
-
-    let str = '';
-
-    if (swiftPrimitive) {
-      if (mostInnerWrappingType.nonNull) {
-        str = `json as! ${swiftElementType}`;
-      } else {
-        str = `json as? ${swiftElementType}`;
-      }
-    } else {
-      if (mostInnerWrappingType.nonNull) {
-        str = `${swiftElementType}(json: json)!`;
-      } else {
-        str = `${swiftElementType}(json: json)`;
-      }
-    }
-
-    str = wrappingTypes.slice(1).reduceRight((str, { list, nonNull }) => {
-      if (list) {
-        return `
-(json as${nonNull ? '!' : '?'} [Any])${nonNull ? '' : '?'}.map { json in
-${indentMultiline(str, 1)}
-}
-          `.trim();
-      } else {
-        return str;
-      }
-    }, str);
-
-    if (mostOuterWrappingType.nonNull) {
-      return `
-self.${name} = (json["${name}"] as! [Any]).map { json in
-${indentMultiline(str, 1)}
-}
-      `.trim();
-    }
-    else {
-      return `
-self.${name} = (json["${name}"] as? [Any])?.map { json in
-${indentMultiline(str, 1)}
-}
-      `.trim();
-    }
-  }).join("\n"), 2)}
+  private enum CodingKeys: String, CodingKey {
+${indentMultiline(properties.map(({ name }) => `case ${name}`).join("\n"), 2)}
   }
-}
-  `.trim();
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+
+${indentMultiline(properties.map(({ name, swiftType }) => `self.${name} = try container.decode(${swiftType}.self, forKey: .${name})`).join("\n"), 2)}
+  }
+}`
 }
 
 export const plugin: PluginFunction = async (
@@ -292,7 +219,7 @@ export const plugin: PluginFunction = async (
     const properties = toSwiftProperties(op.selections, fragments, scalarMap, selectionSets);
 
     return `
-class ${op.name} {
+class ${op.name}: Decodable {
   let data: Data?;
   let errors: Errors?;
   public static let operationDefinition: String =
@@ -300,22 +227,22 @@ class ${op.name} {
 ${indentMultiline(op.definition, 2)}
     """
 
-  init(json: [String: Any]) {
-    self.data = Data(json: json["data"] as Any)
-    self.errors = Errors(json: json["errors"] as Any)
+  private enum CodingKeys: String, CodingKey {
+    case data
+    case errors
+  }
+
+  required init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.data = try container.decode(Data.self, forKey: .data)
+    self.errors = try container.decodeIfPresent(Errors.self, forKey: .errors)
   }
 
 ${indentMultiline(printStruct('Data', [], properties), 1)}
 
-  struct Errors {
-    let json: Any
-
-    init?(json: Any) {
-      guard let errors = json as? [String: Any] else {
-        return nil
-      }
-
-      self.json = errors
+  struct Errors: Decodable {
+    init(from decoder: Decoder) throws {
+      // TODO
     }
   }
 }
