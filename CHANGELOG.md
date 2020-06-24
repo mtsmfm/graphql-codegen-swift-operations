@@ -1,5 +1,9 @@
 # Change log
 
+## 0.4.0
+
+- Use Decodable
+
 ## 0.3.0
 
 - Support nullable and/or nested Array
