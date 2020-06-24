@@ -62,4 +62,5 @@ $ graphql-codegen
 
 - InlineFragment
 - Union
+- Variables
 - Customizable scalar map
